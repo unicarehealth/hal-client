@@ -9,7 +9,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_extracts_properties()
+    public function it_extracts_properties() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -18,7 +18,7 @@ class HalResourceTest extends TestCase
             $httpClient
         );
 
-        $data = json_decode(file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
+        $data = json_decode((string)file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
 
         $resource = HalResource::fromArray(
             $client,
@@ -43,7 +43,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_extracts_resources()
+    public function it_extracts_resources() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -52,7 +52,7 @@ class HalResourceTest extends TestCase
             $httpClient
         );
 
-        $data                              = json_decode(file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
+        $data                              = json_decode((string)file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
         $data['_embedded']['empty_array']  = [];
         $data['_embedded']['string_array'] = ['StringArray'];
         $data['_embedded']['string']       = 'String';
@@ -84,7 +84,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_extracts_links()
+    public function it_extracts_links() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -93,7 +93,7 @@ class HalResourceTest extends TestCase
             $httpClient
         );
 
-        $data                           = json_decode(file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
+        $data                           = json_decode((string)file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
         $data['_links']['empty_array']  = [];
         $data['_links']['string_array'] = ['StringArray'];
         $data['_links']['string']       = 'String';
@@ -126,7 +126,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_extracts_curies()
+    public function it_extracts_curies() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -135,7 +135,7 @@ class HalResourceTest extends TestCase
             $httpClient
         );
 
-        $data                     = json_decode(file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
+        $data                     = json_decode((string)file_get_contents(__DIR__ . '/fixtures/documents.json'), true);
         $data['_links']['curies'] = array_merge(['Curie'], $data['_links']['curies']);
 
         $resource = HalResource::fromArray(
@@ -155,7 +155,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_can_get()
+    public function it_can_get() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -193,7 +193,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_can_post()
+    public function it_can_post() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -231,7 +231,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_can_put()
+    public function it_can_put() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -269,7 +269,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_can_delete()
+    public function it_can_delete() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -307,7 +307,7 @@ class HalResourceTest extends TestCase
     /**
      * @test
      */
-    public function it_can_request()
+    public function it_can_request() : void
     {
         $httpClient = new RecordingHttpClient();
 

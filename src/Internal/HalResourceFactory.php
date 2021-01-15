@@ -23,7 +23,7 @@ final class HalResourceFactory
         RequestInterface $request,
         ResponseInterface $response,
         bool $ignoreInvalidContentType = false
-    ) : HalResource|ResponseInterface {
+    ) : HalResource {
         if (204 === $response->getStatusCode())
         {
             // No-Content response
@@ -38,7 +38,9 @@ final class HalResourceFactory
             $response->hasHeader('Location')
         ) {
             // Created response with Location header
-            return $client->request('GET', $response->getHeader('Location')[0]);
+            /** @var HalResource $res */
+            $res = $client->request('GET', $response->getHeader('Location')[0]);
+            return $res;
         }
 
         if (!$this->isValidContentType($response))

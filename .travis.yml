@@ -1,16 +1,12 @@
 language: php
 
 php:
-  - 7.2
-  - 7.3
-  - 7.4
+  - 8.0
 
 matrix:
   include:
-    - php: 7.2
-      env: GUZZLE_VERSION=^5.0
-    - php: 7.4
-      env: GUZZLE_VERSION=^5.0
+    - php: 8.0
+      env: GUZZLE_VERSION=^7.0
   fast_finish: true
 
 cache:

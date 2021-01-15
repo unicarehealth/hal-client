@@ -11,7 +11,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_creates_default_http_client()
+    public function it_creates_default_http_client() : void
     {
         $this->expectNotToPerformAssertions();
 
@@ -22,7 +22,7 @@ class HalClientTest extends TestCase
      * @test
      * @dataProvider urlProvider
      */
-    public function it_assembles_urls_correctly($root, $uri, $expected)
+    public function it_assembles_urls_correctly(string $root, string $uri, string $expected) : void
     {
         $client = new HalClient($root);
 
@@ -31,7 +31,7 @@ class HalClientTest extends TestCase
         $this->assertEquals((string) $request->getUri(), $expected);
     }
 
-    public static function urlProvider()
+    public static function urlProvider() : array
     {
         return [
             [
@@ -105,7 +105,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_is_immutable()
+    public function it_is_immutable() : void
     {
         $httpClient = new FixtureHttpClient();
 
@@ -142,7 +142,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_get()
+    public function it_can_get() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -172,7 +172,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_post()
+    public function it_can_post() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -202,7 +202,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_put()
+    public function it_can_put() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -232,7 +232,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_delete()
+    public function it_can_delete() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -262,7 +262,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_request()
+    public function it_can_request() : void
     {
         $httpClient = new RecordingHttpClient();
 
@@ -292,7 +292,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_follows_location_for_created_response_with_empty_body()
+    public function it_follows_location_for_created_response_with_empty_body() : void
     {
         $response1 = new Response(201, ['Location' => 'http://propilex.herokuapp.com/resource']);
         $response2 = new Response(200, ['Content-Type' => 'application/hal+json'], '{"foo":"bar"}');
@@ -312,6 +312,7 @@ class HalClientTest extends TestCase
             $httpClient
         );
 
+        /** @var \Jsor\HalClient\HalResource $resource */
         $resource = $client->post('');
 
         $this->assertSame('bar', $resource->getProperty('foo'));
@@ -320,7 +321,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_does_not_follow_location_for_created_response_with_non_empty_body()
+    public function it_does_not_follow_location_for_created_response_with_non_empty_body() : void
     {
         $response = new Response(201, [
             'Location'     => 'http://propilex.herokuapp.com/resource',
@@ -339,6 +340,7 @@ class HalClientTest extends TestCase
             $httpClient
         );
 
+        /** @var \Jsor\HalClient\HalResource $resource */
         $resource = $client->post('');
 
         $this->assertSame('bar', $resource->getProperty('foo'));
@@ -347,7 +349,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_returns_raw_response()
+    public function it_returns_raw_response() : void
     {
         $response = new Response(200);
 
@@ -381,7 +383,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_http_client_throws()
+    public function it_throws_exception_when_http_client_throws() : void
     {
         $exception = new \Exception('Error');
 
@@ -404,7 +406,13 @@ class HalClientTest extends TestCase
             $client->request('GET', '/');
         } catch (\Exception $e) {
             $this->assertSame($exception, $e->getPrevious());
-            $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $e->getRequest());
+
+
+            $this->assertInstanceOf('Jsor\HalClient\Exception\HttpClientException', $e);
+
+            /** @var HttpClientException $typedException */
+            $typedException = $e;
+            $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $typedException->getRequest());
 
             throw $e;
         }
@@ -413,7 +421,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_http_client_returns_client_error()
+    public function it_throws_exception_when_http_client_returns_client_error() : void
     {
         $httpClient = $this->getMockBuilder('Jsor\HalClient\HttpClient\HttpClientInterface')->getMock();
 
@@ -436,7 +444,11 @@ class HalClientTest extends TestCase
             $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $e->getRequest());
             $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
             $this->assertInstanceOf('Jsor\HalClient\HalResource', $e->getResource());
-            $this->assertFalse($e->getResource()->hasLink('self'));
+
+            /** @var \Jsor\HalClient\HalResource $resource */
+            $resource = $e->getResource();
+            $this->assertFalse($resource->hasLink('self'));
+
             $this->assertTrue($e->isClientError());
             $this->assertFalse($e->isServerError());
 
@@ -447,7 +459,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_http_client_returns_server_error()
+    public function it_throws_exception_when_http_client_returns_server_error() : void
     {
         $httpClient = $this->getMockBuilder('Jsor\HalClient\HttpClient\HttpClientInterface')->getMock();
 
@@ -470,7 +482,11 @@ class HalClientTest extends TestCase
             $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $e->getRequest());
             $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
             $this->assertInstanceOf('Jsor\HalClient\HalResource', $e->getResource());
-            $this->assertFalse($e->getResource()->hasLink('self'));
+
+            /** @var \Jsor\HalClient\HalResource $resource */
+            $resource = $e->getResource();
+            $this->assertFalse($resource->hasLink('self'));
+
             $this->assertFalse($e->isClientError());
             $this->assertTrue($e->isServerError());
 
@@ -481,7 +497,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_http_client_returns_unsuccessful_response()
+    public function it_throws_exception_when_http_client_returns_unsuccessful_response() : void
     {
         $httpClient = $this->getMockBuilder('Jsor\HalClient\HttpClient\HttpClientInterface')->getMock();
 
@@ -504,7 +520,11 @@ class HalClientTest extends TestCase
             $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $e->getRequest());
             $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $e->getResponse());
             $this->assertInstanceOf('Jsor\HalClient\HalResource', $e->getResource());
-            $this->assertFalse($e->getResource()->hasLink('self'));
+
+            /** @var \Jsor\HalClient\HalResource $resource */
+            $resource = $e->getResource();
+            $this->assertFalse($resource->hasLink('self'));
+
             $this->assertFalse($e->isClientError());
             $this->assertFalse($e->isServerError());
 
@@ -515,7 +535,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_for_invalid_content_type()
+    public function it_throws_exception_for_invalid_content_type() : void
     {
         $httpClient = $this->getMockBuilder('Jsor\HalClient\HttpClient\HttpClientInterface')->getMock();
 
@@ -538,7 +558,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_getting_response_body_throws()
+    public function it_throws_exception_when_getting_response_body_throws() : void
     {
         $stream = $this->getMockBuilder('Psr\Http\Message\StreamInterface')->getMock();
 
@@ -568,7 +588,7 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_throws_exception_when_http_client_returns_invalid_json()
+    public function it_throws_exception_when_http_client_returns_invalid_json() : void
     {
         $httpClient = $this->getMockBuilder('Jsor\HalClient\HttpClient\HttpClientInterface')->getMock();
 
@@ -591,13 +611,14 @@ class HalClientTest extends TestCase
     /**
      * @test
      */
-    public function it_can_browse()
+    public function it_can_browse() : void
     {
         $client = new HalClient(
             'http://propilex.herokuapp.com',
             new FixtureHttpClient()
         );
 
+        /** @var \Jsor\HalClient\HalResource $resource */
         $resource = $client->root();
 
         $this->assertInstanceOf('Jsor\HalClient\HalResource', $resource);
@@ -612,6 +633,7 @@ class HalClientTest extends TestCase
 
         $this->assertNull($resource->getProperty('fake'));
 
+        /** @var \Jsor\HalClient\HalResource $resource */
         $resource = $resource->getFirstLink('documents')->get([], [
             'query' => [
                 'page' => 1
@@ -650,12 +672,15 @@ class HalClientTest extends TestCase
         $this->assertEquals('Test 2', $collection[1]->getProperty('title'));
         $this->assertEquals('Test 3', $collection[2]->getProperty('title'));
 
+        /** @var \Jsor\HalClient\HalResource $document1 */
         $document1 = $collection[0]->get();
 
         $this->assertEquals('Test 1', $document1->getProperty('title'));
 
+        /** @var \Jsor\HalClient\HalResource $resource */
         $resource = $document1->getFirstLink('documents')->get();
 
+        /** @var \Jsor\HalClient\HalResource $newResource */
         $newResource = $resource->post([
             'body' => [
                 'title' => 'Test 4',
@@ -665,6 +690,7 @@ class HalClientTest extends TestCase
 
         $this->assertEquals('Test 4', $newResource->getProperty('title'));
 
+        /** @var \Jsor\HalClient\HalResource $changedResource */
         $changedResource = $newResource->put([
             'body' => [
                 'title' => 'Test 4 changed',
@@ -674,6 +700,7 @@ class HalClientTest extends TestCase
 
         $this->assertEquals('Test 4 changed', $changedResource->getProperty('title'));
 
+        /** @var \Jsor\HalClient\HalResource $deletedResource */
         $deletedResource = $changedResource->delete();
 
         $this->assertEmpty($deletedResource->getProperties());

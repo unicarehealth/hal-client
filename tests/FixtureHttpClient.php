@@ -4,11 +4,11 @@ namespace Jsor\HalClient;
 
 use GuzzleHttp\Psr7\Response;
 use Jsor\HalClient\HttpClient\HttpClientInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\{RequestInterface, ResponseInterface};
 
 class FixtureHttpClient implements HttpClientInterface
 {
-    public function send(RequestInterface $request)
+    public function send(RequestInterface $request) : ResponseInterface
     {
         switch ($request->getUri()->getPath()) {
             case '/documents/1':
@@ -18,7 +18,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/documents_1.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/documents_1.json')
                     );
                 }
 
@@ -30,7 +30,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/documents_2.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/documents_2.json')
                     );
                 }
 
@@ -42,7 +42,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/documents_3.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/documents_3.json')
                     );
                 }
 
@@ -64,7 +64,7 @@ class FixtureHttpClient implements HttpClientInterface
                             [
                                 'Content-Type' => 'application/hal+json'
                             ],
-                            file_get_contents(__DIR__ . '/fixtures/documents_4_changed.json')
+                            (string)file_get_contents(__DIR__ . '/fixtures/documents_4_changed.json')
                         );
                     }
                 }
@@ -75,7 +75,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/documents_4.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/documents_4.json')
                     );
                 }
 
@@ -98,7 +98,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/documents.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/documents.json')
                     );
                 }
 
@@ -110,7 +110,7 @@ class FixtureHttpClient implements HttpClientInterface
                         [
                             'Content-Type' => 'application/hal+json'
                         ],
-                        file_get_contents(__DIR__ . '/fixtures/root.json')
+                        (string)file_get_contents(__DIR__ . '/fixtures/root.json')
                     );
                 }
 

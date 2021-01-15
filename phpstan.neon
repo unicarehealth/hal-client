@@ -1,2 +1,7 @@
 parameters:
 	checkMissingIterableValueType: false
+
+	ignoreErrors:
+		- '#Comparison operation "<" between 7 and 7 is always false\.#'
+
+

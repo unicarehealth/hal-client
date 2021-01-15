@@ -4,23 +4,21 @@ namespace Jsor\HalClient;
 
 use GuzzleHttp\Psr7\Response;
 use Jsor\HalClient\HttpClient\HttpClientInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\{RequestInterface, ResponseInterface};
 
 class RecordingHttpClient implements HttpClientInterface
 {
-    public $requests = [];
+    /** @var RequestInterface[] $requests */
+    public array $requests = [];
 
-    public function send(RequestInterface $request)
+    public function send(RequestInterface $request) : ResponseInterface
     {
         $this->requests[] = $request;
 
         return new Response(200, ['Content-Type' => 'application/hal+json']);
     }
 
-    /**
-     * @return RequestInterface
-     */
-    public function getLastRequest()
+    public function getLastRequest() : RequestInterface
     {
         return $this->requests[count($this->requests) - 1];
     }

@@ -5,12 +5,12 @@ namespace Jsor\HalClient;
 use GuzzleHttp\Psr7 as GuzzlePsr7;
 use Jsor\HalClient\HttpClient\{HttpClientInterface, Guzzle6HttpClient, Guzzle7HttpClient};
 use Psr\Http\Message\{RequestInterface, ResponseInterface, UriInterface};
-use GuzzleHttp\Psr7\UriResolver;
+use Jsor\HalClient\Internal\HalResourceFactory;
 
 final class HalClient implements HalClientInterface
 {
     private HttpClientInterface $httpClient;
-    private Internal\HalResourceFactory $factory;
+    private HalResourceFactory $factory;
     private RequestInterface $defaultRequest;
 
     /** @var string[] $validContentTypes */
@@ -24,7 +24,7 @@ final class HalClient implements HalClientInterface
     {
         $this->httpClient = $httpClient ?? self::createDefaultHttpClient();
 
-        $this->factory = new Internal\HalResourceFactory(self::$validContentTypes);
+        $this->factory = new HalResourceFactory(self::$validContentTypes);
 
         $this->defaultRequest = new GuzzlePsr7\Request('GET', $rootUrl, [
             'User-Agent' => get_class($this),
@@ -64,7 +64,7 @@ final class HalClient implements HalClientInterface
     }
 
     /** @param string|string[] $value */
-    public function withHeader(string $name, string|array $value) : HalClientInterface
+    public function withHeader(string $name, string|array $value) : self
     {
         $instance = clone $this;
 
@@ -76,31 +76,49 @@ final class HalClient implements HalClientInterface
         return $instance;
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function root(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', '', $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function get(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $uri, $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function post(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $uri, $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function put(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $uri, $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function delete(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $uri, $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function request(
         string $method,
         string|UriInterface $uri,
@@ -159,6 +177,7 @@ final class HalClient implements HalClientInterface
         return $request;
     }
 
+    /** @param string|array<string, string>|array<string, string[]> $query */
     private function applyQuery(RequestInterface $request, string|array $query) : RequestInterface
     {
         $uri = $request->getUri();
@@ -255,6 +274,6 @@ final class HalClient implements HalClientInterface
             $rel = new GuzzlePsr7\Uri($rel);
         }
 
-        return UriResolver::resolve($base, $rel);
+        return GuzzlePsr7\UriResolver::resolve($base, $rel);
     }
 }

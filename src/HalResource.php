@@ -53,15 +53,15 @@ final class HalResource
         return $this->properties;
     }
 
-    public function hasProperty(string $name) : bool
+    public function hasProperty(string|int $nameOrIndex) : bool
     {
-        return isset($this->properties[$name]);
+        return isset($this->properties[$nameOrIndex]);
     }
 
-    public function getProperty(string $name) : mixed
+    public function getProperty(string|int $nameOrIndex) : mixed
     {
-        if (isset($this->properties[$name])) {
-            return $this->properties[$name];
+        if (isset($this->properties[$nameOrIndex])) {
+            return $this->properties[$nameOrIndex];
         }
 
         return null;
@@ -237,26 +237,41 @@ final class HalResource
         });
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function get(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function post(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function put(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function delete(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $options);
     }
 
+    /**
+     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
+     * */
     public function request(string $method, array $options = []) : HalResource|ResponseInterface
     {
         return $this->getFirstLink('self')->request($method, [], $options);
