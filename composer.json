@@ -1,7 +1,14 @@
 {
     "name": "jsor/hal-client",
     "description": "A lightweight client for consuming and manipulating Hypertext Application Language (HAL) resources.",
-    "keywords": ["hal", "rest", "api", "json", "http", "client"],
+    "keywords": [
+        "hal",
+        "rest",
+        "api",
+        "json",
+        "http",
+        "client"
+    ],
     "homepage": "https://github.com/jsor/hal-client",
     "license": "MIT",
     "authors": [
@@ -12,14 +19,16 @@
         }
     ],
     "require": {
-        "php": "^7.2",
+        "php": "^8.0",
         "ext-json": "*",
         "psr/http-message": "^1.0",
-        "guzzlehttp/psr7": "^1.0"
+        "guzzlehttp/psr7": "^1.0",
+        "guzzlehttp/uri-template": "^0.2.0"
     },
     "require-dev": {
-        "guzzlehttp/guzzle": "^5.0||^6.0",
-        "phpunit/phpunit": "^8.1"
+        "guzzlehttp/guzzle": "^7.0",
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "dev-master"
     },
     "suggest": {
         "guzzlehttp/guzzle": "For using Guzzle as your HTTP client"
@@ -33,5 +42,8 @@
         "psr-4": {
             "Jsor\\HalClient\\": "tests/"
         }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse src/ -c phpstan.neon --level=7 --no-progress -vvv --memory-limit=4G"
     }
 }

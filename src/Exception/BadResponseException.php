@@ -5,22 +5,22 @@ namespace Jsor\HalClient\Exception;
 use Jsor\HalClient\HalResource;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 class BadResponseException extends \RuntimeException implements ExceptionInterface
 {
-    private $request;
-    private $response;
-    private $resource;
+    private RequestInterface $request;
+    private ResponseInterface $response;
+    private HalResource|ResponseInterface $resource;
 
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         ResponseInterface $response,
-        HalResource $resource,
-        $previous = null
+        HalResource|ResponseInterface $resource,
+        ?Throwable $previous = null
     ) {
-        $code = $response ? $response->getStatusCode() : 0;
-
+        $code = $response->getStatusCode();
         parent::__construct($message, $code, $previous);
 
         $this->request  = $request;
@@ -31,18 +31,24 @@ class BadResponseException extends \RuntimeException implements ExceptionInterfa
     public static function create(
         RequestInterface $request,
         ResponseInterface $response,
-        HalResource $resource,
-        $previous = null,
-        $message = null
-    ) {
-        if (!$message) {
+        HalResource|ResponseInterface $resource,
+        ?Throwable $previous = null,
+        ?string $message = null
+    ) : self {
+        if ($message === null || $message === '')
+        {
             $code = $response->getStatusCode();
 
-            if ($code >= 400 && $code < 500) {
+            if ($code >= 400 && $code < 500)
+            {
                 $message = 'Client error';
-            } elseif ($code >= 500 && $code < 600) {
+            }
+            elseif ($code >= 500 && $code < 600)
+            {
                 $message = 'Server error';
-            } else {
+            }
+            else
+            {
                 $message = 'Unsuccessful response';
             }
         }
@@ -59,27 +65,27 @@ class BadResponseException extends \RuntimeException implements ExceptionInterfa
         return new self($message, $request, $response, $resource, $previous);
     }
 
-    public function getRequest()
+    public function getRequest() : RequestInterface
     {
         return $this->request;
     }
 
-    public function getResponse()
+    public function getResponse() : ResponseInterface
     {
         return $this->response;
     }
 
-    public function getResource()
+    public function getResource() : HalResource|ResponseInterface
     {
         return $this->resource;
     }
 
-    public function isClientError()
+    public function isClientError() : bool
     {
         return $this->getCode() >= 400 && $this->getCode() < 500;
     }
 
-    public function isServerError()
+    public function isServerError() : bool
     {
         return $this->getCode() >= 500 && $this->getCode() < 600;
     }

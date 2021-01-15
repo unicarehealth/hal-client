@@ -2,76 +2,27 @@
 
 namespace Jsor\HalClient;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\{ResponseInterface, UriInterface};
 
 interface HalClientInterface
 {
-    /**
-     * @return UriInterface
-     */
-    public function getRootUrl();
+    public function getRootUrl() : UriInterface;
 
-    /**
-     * @param string
-     *
-     * @return string[]
-     */
-    public function getHeader($name);
+    /** @return string[] */
+    public function getHeader(string $name) : array;
 
-    /**
-     * @param string
-     * @param string|string[]
-     *
-     * @return HalClientInterface
-     */
-    public function withHeader($name, $value);
+    /** @param string|string[] $value */
+    public function withHeader(string $name, string|array $value) : HalClientInterface;
 
-    /**
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function root(array $options = []);
+    public function root(array $options = []) : HalResource|ResponseInterface;
 
-    /**
-     * @param string|UriInterface
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function get($uri, array $options = []);
+    public function get(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface;
 
-    /**
-     * @param string|UriInterface
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function post($uri, array $options = []);
+    public function post(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface;
 
-    /**
-     * @param string|UriInterface
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function put($uri, array $options = []);
+    public function put(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface;
 
-    /**
-     * @param string|UriInterface
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function delete($uri, array $options = []);
+    public function delete(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface;
 
-    /**
-     * @param string
-     * @param string|UriInterface
-     * @param array
-     *
-     * @return HalResource|ResponseInterface
-     */
-    public function request($method, $uri, array $options = []);
+    public function request(string $method, string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface;
 }

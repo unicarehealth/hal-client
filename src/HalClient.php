@@ -3,28 +3,26 @@
 namespace Jsor\HalClient;
 
 use GuzzleHttp\Psr7 as GuzzlePsr7;
-use Jsor\HalClient\HttpClient\Guzzle5HttpClient;
-use Jsor\HalClient\HttpClient\Guzzle6HttpClient;
-use Jsor\HalClient\HttpClient\HttpClientInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
+use Jsor\HalClient\HttpClient\{HttpClientInterface, Guzzle6HttpClient, Guzzle7HttpClient};
+use Psr\Http\Message\{RequestInterface, ResponseInterface, UriInterface};
+use GuzzleHttp\Psr7\UriResolver;
 
 final class HalClient implements HalClientInterface
 {
-    private $httpClient;
-    private $factory;
-    private $defaultRequest;
+    private HttpClientInterface $httpClient;
+    private Internal\HalResourceFactory $factory;
+    private RequestInterface $defaultRequest;
 
-    private static $validContentTypes = [
+    /** @var string[] $validContentTypes */
+    private static array $validContentTypes = [
         'application/hal+json',
         'application/json',
         'application/vnd.error+json'
     ];
 
-    public function __construct($rootUrl, HttpClientInterface $httpClient = null)
+    public function __construct(string|UriInterface $rootUrl, HttpClientInterface $httpClient = null)
     {
-        $this->httpClient = $httpClient ?: self::createDefaultHttpClient();
+        $this->httpClient = $httpClient ?? self::createDefaultHttpClient();
 
         $this->factory = new Internal\HalResourceFactory(self::$validContentTypes);
 
@@ -43,12 +41,12 @@ final class HalClient implements HalClientInterface
     /**
      * @return \Psr\Http\Message\UriInterface
      */
-    public function getRootUrl()
+    public function getRootUrl() : UriInterface
     {
         return $this->defaultRequest->getUri();
     }
 
-    public function withRootUrl($rootUrl)
+    public function withRootUrl(string|UriInterface $rootUrl) : self
     {
         $instance = clone $this;
 
@@ -59,12 +57,14 @@ final class HalClient implements HalClientInterface
         return $instance;
     }
 
-    public function getHeader($name)
+    /** @return string[] */
+    public function getHeader(string $name) : array
     {
         return $this->defaultRequest->getHeader($name);
     }
 
-    public function withHeader($name, $value)
+    /** @param string|string[] $value */
+    public function withHeader(string $name, string|array $value) : HalClientInterface
     {
         $instance = clone $this;
 
@@ -76,36 +76,36 @@ final class HalClient implements HalClientInterface
         return $instance;
     }
 
-    public function root(array $options = [])
+    public function root(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', '', $options);
     }
 
-    public function get($uri, array $options = [])
+    public function get(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $uri, $options);
     }
 
-    public function post($uri, array $options = [])
+    public function post(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $uri, $options);
     }
 
-    public function put($uri, array $options = [])
+    public function put(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $uri, $options);
     }
 
-    public function delete($uri, array $options = [])
+    public function delete(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $uri, $options);
     }
 
     public function request(
-        $method,
-        $uri,
+        string $method,
+        string|UriInterface $uri,
         array $options = []
-    ) {
+    ) : HalResource|ResponseInterface {
         $request = $this->createRequest($method, $uri, $options);
 
         try {
@@ -118,10 +118,10 @@ final class HalClient implements HalClientInterface
     }
 
     public function createRequest(
-        $method,
-        $uri,
+        string $method,
+        string|UriInterface $uri,
         array $options = []
-    ) {
+    ) : RequestInterface {
         /** @var \Psr\Http\Message\RequestInterface $request */
         $request = clone $this->defaultRequest;
 
@@ -136,7 +136,7 @@ final class HalClient implements HalClientInterface
         return $request;
     }
 
-    private function applyOptions(RequestInterface $request, array $options)
+    private function applyOptions(RequestInterface $request, array $options) : RequestInterface
     {
         if (isset($options['version'])) {
             $request = $request->withProtocolVersion($options['version']);
@@ -159,7 +159,7 @@ final class HalClient implements HalClientInterface
         return $request;
     }
 
-    private function applyQuery(RequestInterface $request, $query)
+    private function applyQuery(RequestInterface $request, string|array $query) : RequestInterface
     {
         $uri = $request->getUri();
 
@@ -173,11 +173,11 @@ final class HalClient implements HalClientInterface
         );
 
         return $request->withUri(
-            $uri->withQuery(http_build_query($newQuery, null, '&'))
+            $uri->withQuery(http_build_query($newQuery, '', '&'))
         );
     }
 
-    private function applyBody(RequestInterface $request, $body)
+    private function applyBody(RequestInterface $request, string|array $body) : RequestInterface
     {
         if (is_array($body)) {
             $body = json_encode($body);
@@ -197,7 +197,7 @@ final class HalClient implements HalClientInterface
         RequestInterface $request,
         ResponseInterface $response,
         array $options
-    ) {
+    ) : HalResource|ResponseInterface {
         $statusCode = $response->getStatusCode();
 
         if ($statusCode >= 200 && $statusCode < 300) {
@@ -218,52 +218,43 @@ final class HalClient implements HalClientInterface
         );
     }
 
-    private static function createDefaultHttpClient()
+    private static function createDefaultHttpClient() : HttpClientInterface
     {
         // @codeCoverageIgnoreStart
         if (!interface_exists('GuzzleHttp\ClientInterface')) {
             throw new \RuntimeException(
                 'Cannot create default HttpClient because guzzlehttp/guzzle is not installed.' .
-                'Install with `composer require guzzlehttp/guzzle:"~5.0|~6.0"`.'
+                'Install with `composer require guzzlehttp/guzzle:"^7.0"`.'
             );
         }
         // @codeCoverageIgnoreEnd
 
-        switch (substr(\GuzzleHttp\ClientInterface::VERSION, 0, 1)) {
-            case '5':
-                return new Guzzle5HttpClient();
-            case '6':
-                return new Guzzle6HttpClient();
+        $ghciMajorVersion = 'unknown';
+        if (defined('\GuzzleHttp\ClientInterface::MAJOR_VERSION')) {
+            $ghciMajorVersion = \GuzzleHttp\ClientInterface::MAJOR_VERSION;
+        }
+
+        switch ($ghciMajorVersion) {
+            case '7':
+                return new Guzzle7HttpClient();
             // @codeCoverageIgnoreStart
             default:
                 throw new \RuntimeException(
                     sprintf(
                         'Unsupported GuzzleHttp\Client version %s.',
-                        \GuzzleHttp\ClientInterface::VERSION
+                        $ghciMajorVersion
                     )
                 );
             // @codeCoverageIgnoreEnd
         }
     }
 
-    private static function resolveUri($base, $rel)
+    private static function resolveUri(UriInterface $base, string|UriInterface $rel) : UriInterface
     {
-        static $resolver, $castRel;
-
-        if (!$resolver) {
-            if (class_exists('GuzzleHttp\Psr7\UriResolver')) {
-                $resolver = ['GuzzleHttp\Psr7\UriResolver', 'resolve'];
-                $castRel  = true;
-            } else {
-                $resolver = ['GuzzleHttp\Psr7\Uri', 'resolve'];
-                $castRel  = false;
-            }
-        }
-
-        if ($castRel && !($rel instanceof UriInterface)) {
+        if (!($rel instanceof UriInterface)) {
             $rel = new GuzzlePsr7\Uri($rel);
         }
 
-        return $resolver($base, $rel);
+        return UriResolver::resolve($base, $rel);
     }
 }

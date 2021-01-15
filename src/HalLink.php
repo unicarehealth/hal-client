@@ -2,28 +2,31 @@
 
 namespace Jsor\HalClient;
 
+use GuzzleHttp\UriTemplate\UriTemplate;
+use Psr\Http\Message\ResponseInterface;
+
 final class HalLink
 {
-    private $client;
-    private $href;
-    private $templated;
-    private $type;
-    private $deprecation;
-    private $name;
-    private $profile;
-    private $title;
-    private $hreflang;
+    private HalClientInterface $client;
+    private string $href;
+    private bool $templated;
+    private ?string $type;
+    private ?string $deprecation;
+    private ?string $name;
+    private ?string $profile;
+    private ?string $title;
+    private ?string $hreflang;
 
     public function __construct(
         HalClientInterface $client,
-        $href,
-        $templated = null,
-        $type = null,
-        $deprecation = null,
-        $name = null,
-        $profile = null,
-        $title = null,
-        $hreflang = null
+        string $href = '',
+        bool $templated = false,
+        ?string $type = null,
+        ?string $deprecation = null,
+        ?string $name = null,
+        ?string $profile = null,
+        ?string $title = null,
+        ?string $hreflang = null
     ) {
         $this->client      = $client;
         $this->href        = $href;
@@ -36,11 +39,11 @@ final class HalLink
         $this->hreflang    = $hreflang;
     }
 
-    public static function fromArray(HalClientInterface $client, array $array)
+    public static function fromArray(HalClientInterface $client, array $array) : self
     {
         $array = array_replace([
-            'href'        => null,
-            'templated'   => null,
+            'href'        => '',
+            'templated'   => false,
             'type'        => null,
             'deprecation' => null,
             'name'        => null,
@@ -51,20 +54,23 @@ final class HalLink
 
         return new self(
             $client,
-            $array['href'],
-            $array['templated'],
-            $array['type'],
-            $array['deprecation'],
-            $array['name'],
-            $array['profile'],
-            $array['title'],
-            $array['hreflang']
+            is_string($array['href']) ? $array['href'] : '',
+            is_bool($array['templated']) ? $array['templated'] : false,
+            is_string($array['type']) ? $array['type'] : null,
+            is_string($array['deprecation']) ? $array['deprecation'] : null,
+            is_string($array['name']) ? $array['name'] : null,
+            is_string($array['profile']) ? $array['profile'] : null,
+            is_string($array['title']) ? $array['title'] : null,
+            is_string($array['hreflang']) ? $array['hreflang'] : null
         );
     }
 
-    public function getUri(array $variables = [])
+    /**
+     * @param array<string,mixed> $variables Variables to use in the template expansion
+     */
+    public function getUri(array $variables = []) : string
     {
-        $uri = (string) $this->href;
+        $uri = (string)$this->href;
 
         if (true === $this->templated) {
             $uri = self::expandUriTemplate($uri, $variables);
@@ -73,67 +79,67 @@ final class HalLink
         return $uri;
     }
 
-    public function getHref()
+    public function getHref() : string
     {
         return $this->href;
     }
 
-    public function getTemplated()
+    public function getTemplated() : bool
     {
         return $this->templated;
     }
 
-    public function getType()
+    public function getType() : ?string
     {
         return $this->type;
     }
 
-    public function getDeprecation()
+    public function getDeprecation() : ?string
     {
         return $this->deprecation;
     }
 
-    public function getName()
+    public function getName() : ?string
     {
         return $this->name;
     }
 
-    public function getProfile()
+    public function getProfile() : ?string
     {
         return $this->profile;
     }
 
-    public function getTitle()
+    public function getTitle() : ?string
     {
         return $this->title;
     }
 
-    public function getHreflang()
+    public function getHreflang() : ?string
     {
         return $this->hreflang;
     }
 
-    public function get(array $variables = [], array $options = [])
+    public function get(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $variables, $options);
     }
 
-    public function post(array $variables = [], array $options = [])
+    public function post(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $variables, $options);
     }
 
-    public function put(array $variables = [], array $options = [])
+    public function put(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $variables, $options);
     }
 
-    public function delete(array $variables = [], array $options = [])
+    public function delete(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $variables, $options);
     }
 
-    public function request($method, array $variables = [], array $options = [])
+    public function request(string $method, array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->client->request(
             $method,
@@ -142,30 +148,17 @@ final class HalLink
         );
     }
 
-    private static function expandUriTemplate($template, $variables)
+    /**
+     * @param array<string,mixed> $variables Variables to use in the template expansion
+     */
+    private static function expandUriTemplate(string $template, array $variables) : string
     {
         static $guzzleUriTemplate;
 
-        if (function_exists('\uri_template')) {
-            // @codeCoverageIgnoreStart
-            return \uri_template($template, $variables);
-            // @codeCoverageIgnoreEnd
+        if (!$guzzleUriTemplate) {
+            $guzzleUriTemplate = new UriTemplate();
         }
 
-        if (class_exists('\GuzzleHttp\UriTemplate')) {
-            if (!$guzzleUriTemplate) {
-                $guzzleUriTemplate = new \GuzzleHttp\UriTemplate();
-            }
-
-            return $guzzleUriTemplate->expand($template, $variables);
-        }
-
-        throw new \RuntimeException(
-            'Could not detect supported method for expanding URI templates. ' .
-            'You should either provide a global \uri_template function ' .
-            '(e.g. by installing the uri_template extension from ' .
-            'https://github.com/ioseb/uri-template) or by installing the ' .
-            'guzzlehttp/guzzle package (version ^5.0 or ^6.0) via Composer.'
-        );
+        return $guzzleUriTemplate->expand($template, $variables);
     }
 }

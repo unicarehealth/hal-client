@@ -3,15 +3,16 @@
 namespace Jsor\HalClient\Internal;
 
 use Jsor\HalClient\Exception;
-use Jsor\HalClient\HalClientInterface;
-use Jsor\HalClient\HalResource;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use Jsor\HalClient\{HalClientInterface, HalResource};
+use Psr\Http\Message\{RequestInterface, ResponseInterface};
+use JsonException;
 
 final class HalResourceFactory
 {
-    private $validContentTypes;
+    /** @var string[] $validContentTypes */
+    private array $validContentTypes;
 
+    /** @param string[] $validContentTypes */
     public function __construct(array $validContentTypes)
     {
         $this->validContentTypes = $validContentTypes;
@@ -21,9 +22,10 @@ final class HalResourceFactory
         HalClientInterface $client,
         RequestInterface $request,
         ResponseInterface $response,
-        $ignoreInvalidContentType = false
-    ) {
-        if (204 === $response->getStatusCode()) {
+        bool $ignoreInvalidContentType = false
+    ) : HalResource|ResponseInterface {
+        if (204 === $response->getStatusCode())
+        {
             // No-Content response
             return new HalResource($client);
         }
@@ -39,7 +41,8 @@ final class HalResourceFactory
             return $client->request('GET', $response->getHeader('Location')[0]);
         }
 
-        if (!$this->isValidContentType($response)) {
+        if (!$this->isValidContentType($response))
+        {
             return $this->handleInvalidContentType(
                 $client,
                 $request,
@@ -56,15 +59,17 @@ final class HalResourceFactory
         );
     }
 
-    private function isValidContentType(ResponseInterface $response)
+    private function isValidContentType(ResponseInterface $response) : bool
     {
-        if (!$response->hasHeader('Content-Type')) {
+        if (!$response->hasHeader('Content-Type'))
+        {
             return false;
         }
 
         $contentTypeHeader = $response->getHeaderLine('Content-Type');
 
-        if (preg_match("/^([^;]+)(;[\s]?(charset|boundary)=(.+))?$/", $contentTypeHeader, $match)) {
+        if (preg_match("/^([^;]+)(;[\s]?(charset|boundary)=(.+))?$/", $contentTypeHeader, $match))
+        {
             $contentTypeHeader = $match[1];
         }
 
@@ -75,9 +80,10 @@ final class HalResourceFactory
         HalClientInterface $client,
         RequestInterface $request,
         ResponseInterface $response,
-        $ignoreInvalidContentType
-    ) {
-        if ($ignoreInvalidContentType) {
+        bool $ignoreInvalidContentType = false
+    ) : HalResource {
+        if ($ignoreInvalidContentType)
+        {
             return new HalResource($client);
         }
 
@@ -98,9 +104,10 @@ final class HalResourceFactory
         HalClientInterface $client,
         RequestInterface $request,
         ResponseInterface $response,
-        $body
-    ) {
-        if ('' === $body) {
+        string $body = ''
+    ) : HalResource {
+        if ('' === $body)
+        {
             return new HalResource($client);
         }
 
@@ -113,10 +120,13 @@ final class HalResourceFactory
         HalClientInterface $client,
         RequestInterface $request,
         ResponseInterface $response
-    ) {
-        try {
+    ) : string {
+        try
+        {
             return $response->getBody()->getContents();
-        } catch (\Throwable $e) {
+        }
+        catch (\Throwable $e)
+        {
             throw new Exception\BadResponseException(
                 sprintf(
                     'Error getting response body: %s.',
@@ -130,48 +140,26 @@ final class HalResourceFactory
         }
     }
 
+    /** @return array<mixed> */
     private function decodeBody(
         HalClientInterface $client,
         RequestInterface $request,
         ResponseInterface $response,
-        $body
-    ) {
-        $data = json_decode($body, true);
+        string $body = ''
+    ) : array {
 
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new Exception\BadResponseException(
-                sprintf(
-                    'JSON parse error: %s.',
-                    self::getLastJsonError()
-                ),
+        try
+		{
+            return json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        }
+        catch (JsonException $e)
+		{
+			throw new Exception\BadResponseException(
+                sprintf('JSON parse error: %s.', $e->getMessage()),
                 $request,
                 $response,
                 new HalResource($client)
             );
         }
-
-        return $data;
-    }
-
-    private static function getLastJsonError()
-    {
-        if (function_exists('json_last_error_msg')) {
-            return json_last_error_msg();
-        }
-
-        static $errors = [
-            JSON_ERROR_NONE           => null,
-            JSON_ERROR_DEPTH          => 'Maximum stack depth exceeded',
-            JSON_ERROR_STATE_MISMATCH => 'Underflow or the modes mismatch',
-            JSON_ERROR_CTRL_CHAR      => 'Unexpected control character found',
-            JSON_ERROR_SYNTAX         => 'Syntax error, malformed JSON',
-            JSON_ERROR_UTF8           => 'Malformed UTF-8 characters, possibly incorrectly encoded',
-        ];
-
-        $error = json_last_error();
-
-        return array_key_exists($error, $errors)
-            ? $errors[$error]
-            : sprintf('Unknown error (%s)', $error);
     }
 }
