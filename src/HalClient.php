@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
@@ -7,6 +7,13 @@ use Jsor\HalClient\HttpClient\{HttpClientInterface, Guzzle6HttpClient, Guzzle7Ht
 use Psr\Http\Message\{RequestInterface, ResponseInterface, UriInterface};
 use Jsor\HalClient\Internal\HalResourceFactory;
 
+/**
+ * @phpstan-import-type HeaderOptionValueType from HalClientInterface
+ * @phpstan-import-type BodyOptionType from HalClientInterface
+ * @phpstan-import-type QueryParametersOptionType from HalClientInterface
+ * @phpstan-import-type RequestOptionsType from HalClientInterface
+ * @phpstan-import-type ResponseOptionsType from HalClientInterface
+ */
 final class HalClient implements HalClientInterface
 {
     private HttpClientInterface $httpClient;
@@ -63,7 +70,7 @@ final class HalClient implements HalClientInterface
         return $this->defaultRequest->getHeader($name);
     }
 
-    /** @param string|string[] $value */
+    /** @param HeaderOptionValueType $value */
     public function withHeader(string $name, string|array $value) : self
     {
         $instance = clone $this;
@@ -77,48 +84,48 @@ final class HalClient implements HalClientInterface
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function root(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', '', $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function get(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $uri, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function post(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $uri, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function put(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $uri, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function delete(string|UriInterface $uri, array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $uri, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function request(
         string $method,
         string|UriInterface $uri,
@@ -132,9 +139,13 @@ final class HalClient implements HalClientInterface
             throw Exception\HttpClientException::create($request, $e);
         }
 
-        return $this->handleResponse($request, $response, $options);
+        $responseOptions = isset($options['return_raw_response']) ? [ 'return_raw_response' => $options['return_raw_response'] ] : [];
+        return $this->handleResponse($request, $response, $responseOptions);
     }
 
+    /**
+     * @param RequestOptionsType $options
+     */
     public function createRequest(
         string $method,
         string|UriInterface $uri,
@@ -154,6 +165,9 @@ final class HalClient implements HalClientInterface
         return $request;
     }
 
+    /**
+     * @param RequestOptionsType $options
+     */
     private function applyOptions(RequestInterface $request, array $options) : RequestInterface
     {
         if (isset($options['version'])) {
@@ -177,7 +191,7 @@ final class HalClient implements HalClientInterface
         return $request;
     }
 
-    /** @param string|array<string, string>|array<string, string[]> $query */
+    /** @param QueryParametersOptionType $query */
     private function applyQuery(RequestInterface $request, string|array $query) : RequestInterface
     {
         $uri = $request->getUri();
@@ -196,6 +210,9 @@ final class HalClient implements HalClientInterface
         );
     }
 
+    /**
+     * @param BodyOptionType $body Either raw body text or an object to encode as JSON.
+     */
     private function applyBody(RequestInterface $request, string|array $body) : RequestInterface
     {
         if (is_array($body)) {
@@ -212,6 +229,9 @@ final class HalClient implements HalClientInterface
         return $request->withBody(GuzzlePsr7\stream_for($body));
     }
 
+    /**
+     * @param ResponseOptionsType $options
+     */
     private function handleResponse(
         RequestInterface $request,
         ResponseInterface $response,

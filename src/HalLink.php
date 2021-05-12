@@ -1,10 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
 use GuzzleHttp\UriTemplate\UriTemplate;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * @phpstan-type GuzzleUriTemplateVariables array<string, mixed>
+ * @phpstan-type RawHalLink array{href?:string, templated?:bool, type?:?string, deprecation?:?string, name?:?string, profile?:?string, title?:?string, hreflang?:?string}
+ * @phpstan-import-type RequestOptionsType from HalClientInterface
+ */
 final class HalLink
 {
     private HalClientInterface $client;
@@ -39,6 +44,9 @@ final class HalLink
         $this->hreflang    = $hreflang;
     }
 
+    /**
+     * @param RawHalLink $array
+     */
     public static function fromArray(HalClientInterface $client, array $array) : self
     {
         $array = array_replace([
@@ -66,7 +74,7 @@ final class HalLink
     }
 
     /**
-     * @param array<string,mixed> $variables Variables to use in the template expansion
+     * @param GuzzleUriTemplateVariables $variables Variables to use in the template expansion
      */
     public function getUri(array $variables = []) : string
     {
@@ -120,40 +128,45 @@ final class HalLink
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param GuzzleUriTemplateVariables $variables
+     * @param RequestOptionsType $options
+     */
     public function get(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $variables, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param GuzzleUriTemplateVariables $variables
+     * @param RequestOptionsType $options
+     */
     public function post(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $variables, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param GuzzleUriTemplateVariables $variables
+     * @param RequestOptionsType $options
+     */
     public function put(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $variables, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param GuzzleUriTemplateVariables $variables
+     * @param RequestOptionsType $options
+     */
     public function delete(array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $variables, $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param GuzzleUriTemplateVariables $variables
+     * @param RequestOptionsType $options
+     */
     public function request(string $method, array $variables = [], array $options = []) : HalResource|ResponseInterface
     {
         return $this->client->request(
@@ -164,7 +177,7 @@ final class HalLink
     }
 
     /**
-     * @param array<string,mixed> $variables Variables to use in the template expansion
+     * @param GuzzleUriTemplateVariables $variables Variables to use in the template expansion
      */
     private static function expandUriTemplate(string $template, array $variables) : string
     {

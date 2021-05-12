@@ -1,16 +1,35 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * @phpstan-import-type RequestOptionsType from HalClientInterface
+ * @phpstan-import-type RawHalLink from HalLink
+ * @phpstan-type LinksCache array<string, RawHalLink>
+ * @phpstan-type PropertiesCache array<string|int, mixed>
+ * @phpstan-type RawResource array<mixed>
+ * @phpstan-type ResourcesCache array<string|int, RawResource>
+ */
 final class HalResource
 {
     private HalClientInterface $client;
+
+    /** @var PropertiesCache */
     private array $properties;
+
+    /** @var LinksCache */
     private array $links;
+
+    /** @var ResourcesCache */
     private array $resources;
 
+    /**
+     * @param PropertiesCache $properties
+     * @param LinksCache $links
+     * @param ResourcesCache $resources
+     */
     public function __construct(
         HalClientInterface $client,
         array $properties = [],
@@ -23,6 +42,9 @@ final class HalResource
         $this->resources  = $resources;
     }
 
+    /**
+     * @param array<int|string, mixed> $array
+     */
     public static function fromArray(HalClientInterface $client, array $array) : self
     {
         $links     = [];
@@ -48,6 +70,7 @@ final class HalResource
         );
     }
 
+    /** @return PropertiesCache */
     public function getProperties() : array
     {
         return $this->properties;
@@ -94,9 +117,7 @@ final class HalResource
      */
     public function getLink(string $rel) : array
     {
-        return array_map(function ($link) {
-            return HalLink::fromArray($this->client, $link);
-        }, $this->getLinkData($rel));
+        return array_map(fn($link) => HalLink::fromArray($this->client, $link), $this->getLinkData($rel));
     }
 
     public function getFirstLink(string $rel) : ?HalLink
@@ -110,6 +131,9 @@ final class HalResource
         return HalLink::fromArray($this->client, $link[0]);
     }
 
+    /**
+     * @return RawHalLink[]
+     */
     private function getLinkData(string $rel) : array
     {
         $resolvedRel = $this->resolveLinkRel($rel);
@@ -123,9 +147,7 @@ final class HalResource
             );
         }
 
-        return $this->normalizeData($this->links[$resolvedRel], function ($link) {
-            return ['href' => $link];
-        });
+        return $this->normalizeData($this->links[$resolvedRel], fn($link) => ['href' => $link]);
     }
 
     private function resolveLinkRel(string $rel) : false|string
@@ -159,7 +181,7 @@ final class HalResource
     }
 
     /**
-     * @return array<string, HalResource[]>
+     * @return array<int|string, HalResource[]>
      */
     public function getResources() : array
     {
@@ -180,14 +202,12 @@ final class HalResource
     /**
      * @return HalResource[]
      */
-    public function getResource(string $rel) : array
+    public function getResource(int|string $rel) : array
     {
-        return array_map(function ($data) {
-            return static::fromArray($this->client, $data);
-        }, $this->getResourceData($rel));
+        return array_map(fn($data) => static::fromArray($this->client, $data), $this->getResourceData($rel));
     }
 
-    public function getFirstResource(string $rel) : ?self
+    public function getFirstResource(int|string $rel) : ?self
     {
         $resources = $this->getResourceData($rel);
 
@@ -198,12 +218,11 @@ final class HalResource
         return static::fromArray($this->client, $resources[0]);
     }
 
-    private function getResourceData(string $rel) : array
+    /** @return RawResource */
+    private function getResourceData(int|string $rel) : array
     {
         if (isset($this->resources[$rel])) {
-            return $this->normalizeData($this->resources[$rel], function ($resource) {
-                return [$resource];
-            });
+            return $this->normalizeData($this->resources[$rel], fn($resource) => [$resource]);
         }
 
         throw new Exception\InvalidArgumentException(
@@ -214,6 +233,7 @@ final class HalResource
         );
     }
 
+    /** @return array<mixed> */
     private function normalizeData(mixed $data, callable $arrayNormalizer) : array
     {
         if (!$data) {
@@ -224,56 +244,52 @@ final class HalResource
             $data = [$data];
         }
 
-        $data = array_map(function ($entry) use ($arrayNormalizer) {
-            if (null !== $entry && !is_array($entry)) {
-                $entry = $arrayNormalizer($entry);
-            }
+        $mapper = function ($entry) use ($arrayNormalizer) {
+            return (null !== $entry && !is_array($entry)) ? $arrayNormalizer($entry) : $entry;
+        };
+        $data = array_map($mapper, $data);
 
-            return $entry;
-        }, $data);
-
-        return array_filter($data, function ($entry) {
-            return null !== $entry;
-        });
+        $nonNullEntries = array_filter($data, fn($entry) => null !== $entry);
+        return $nonNullEntries;
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function get(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('GET', $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function post(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('POST', $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function put(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('PUT', $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function delete(array $options = []) : HalResource|ResponseInterface
     {
         return $this->request('DELETE', $options);
     }
 
     /**
-     * @param array{version?:string, return_raw_response?:bool, headers?:array<string, string|string[]>, query?:string|array<string, int|string|string[]>, body?:string|array<mixed>} $options
-     * */
+     * @param RequestOptionsType $options
+     */
     public function request(string $method, array $options = []) : HalResource|ResponseInterface
     {
-        return $this->getFirstLink('self')->request($method, [], $options);
+        return $this->getFirstLink('self')?->request($method, [], $options) ?? throw new Exception\BadResponseException('Response _links does not contain key \'self\'.');
     }
 }

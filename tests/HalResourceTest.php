@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
@@ -72,10 +72,10 @@ class HalResourceTest extends TestCase
         $this->assertNull($resource->getFirstResource('empty_array'));
 
         $this->assertCount(1, $resource->getResource('string_array'));
-        $this->assertSame('StringArray', $resource->getFirstResource('string_array')->getProperty(0));
+        $this->assertSame('StringArray', $resource->getFirstResource('string_array')?->getProperty(0));
 
         $this->assertCount(1, $resource->getResource('string'));
-        $this->assertSame('String', $resource->getFirstResource('string')->getProperty(0));
+        $this->assertSame('String', $resource->getFirstResource('string')?->getProperty(0));
 
         $this->expectException(InvalidArgumentException::class);
         $resource->getResource('non_existing');
@@ -113,10 +113,10 @@ class HalResourceTest extends TestCase
         $this->assertNull($resource->getFirstLink('empty_array'));
 
         $this->assertCount(1, $resource->getLink('string_array'));
-        $this->assertSame('StringArray', $resource->getFirstLink('string_array')->getHref());
+        $this->assertSame('StringArray', $resource->getFirstLink('string_array')?->getHref());
 
         $this->assertCount(1, $resource->getLink('string'));
-        $this->assertSame('String', $resource->getFirstLink('string')->getHref());
+        $this->assertSame('String', $resource->getFirstLink('string')?->getHref());
 
         $this->assertFalse($resource->hasLink('non_existing'));
         $this->expectException(InvalidArgumentException::class);

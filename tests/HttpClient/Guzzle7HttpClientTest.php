@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient\HttpClient;
 
@@ -13,6 +13,7 @@ class Guzzle7HttpClientTest extends TestCase
 {
     public function setUp(): void
     {
+        /* @phpstan-ignore-next-line */
         if (!defined('GuzzleHttp\ClientInterface::MAJOR_VERSION') || GuzzleClientInterface::MAJOR_VERSION < 7)
         {
             $this->markTestIncomplete("GuzzleHttp version other than ^7.0 installed (Installed version ${GuzzleClientInterface::MAJOR_VERSION}.");

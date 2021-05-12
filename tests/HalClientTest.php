@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
@@ -31,6 +31,7 @@ class HalClientTest extends TestCase
         $this->assertEquals((string) $request->getUri(), $expected);
     }
 
+    /** @return array<string[]> */
     public static function urlProvider() : array
     {
         return [
@@ -625,16 +626,17 @@ class HalClientTest extends TestCase
         $this->assertEmpty($resource->getProperties());
         $this->assertEmpty($resource->getResources());
 
-        $link = $resource->getFirstLink('documents');
+        /** @var \Jsor\HalClient\HalLink $firstLink */
+        $firstLink = $resource->getFirstLink('documents');
 
-        $this->assertInstanceOf('Jsor\HalClient\HalLink', $link);
+        $this->assertInstanceOf('Jsor\HalClient\HalLink', $firstLink);
 
-        $this->assertEquals($link->getHref(), 'http://propilex.herokuapp.com/documents');
+        $this->assertEquals($firstLink->getHref(), 'http://propilex.herokuapp.com/documents');
 
         $this->assertNull($resource->getProperty('fake'));
 
         /** @var \Jsor\HalClient\HalResource $resource */
-        $resource = $resource->getFirstLink('documents')->get([], [
+        $resource = $firstLink->get([], [
             'query' => [
                 'page' => 1
             ]
@@ -678,7 +680,7 @@ class HalClientTest extends TestCase
         $this->assertEquals('Test 1', $document1->getProperty('title'));
 
         /** @var \Jsor\HalClient\HalResource $resource */
-        $resource = $document1->getFirstLink('documents')->get();
+        $resource = $document1->getFirstLink('documents')?->get();
 
         /** @var \Jsor\HalClient\HalResource $newResource */
         $newResource = $resource->post([

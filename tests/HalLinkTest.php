@@ -1,9 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Jsor\HalClient;
 
 class HalLinkTest extends TestCase
 {
+    /** @var array<string, int> $variables */
     private array $variables  = [
         'page'  => 1,
         'limit' => 10
